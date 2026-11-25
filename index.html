@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZK-AgeGate | Zero-Knowledge Proof Identity Verification Demo</title>
+  <title>DigiPass 18+ | Private Identity Verification (ZKP)</title>
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@latest/build/snarkjs.min.js"></script>
   <style>
     :root {
-      --bg: #f4f7f5;
+      --bg: #f6f8f7;
       --surface: #ffffff;
-      --surface-alt: #eef4f0;
+      --surface-soft: #f0f5f2;
       --primary: #0f766e;
-      --primary-dark: #115e59;
-      --primary-soft: #ccfbf1;
+      --primary-hover: #115e59;
+      --primary-light: #ccfbf1;
       --text: #0f172a;
-      --muted: #475569;
-      --border: #d1ddd6;
+      --muted: #64748b;
+      --border: #e2e8f0;
       --success: #15803d;
       --success-bg: #dcfce7;
       --danger: #b91c1c;
@@ -30,212 +30,343 @@
       font-family: var(--sans);
       background: var(--bg);
       color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 16px 48px;
       line-height: 1.5;
-      padding: 24px 16px 48px;
     }
 
-    .container { max-width: 1080px; margin: 0 auto; }
-
-    header {
+    /* Top Minimal Navbar */
+    .topbar {
+      width: 100%;
+      max-width: 680px;
       display: flex;
-      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid var(--border);
+      margin-bottom: 24px;
     }
 
-    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: -0.3px;
+    }
 
-    .logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
       background: var(--primary);
       color: #fff;
       display: grid;
       place-items: center;
+      font-size: 0.9rem;
       font-weight: 800;
-      font-size: 18px;
-      letter-spacing: -0.5px;
     }
 
-    h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.3px; }
-    .subtitle { font-size: 0.9rem; color: var(--muted); }
-
-    .badge-pill {
+    .status-dot-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
+      gap: 7px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 5px 11px;
       border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--muted);
     }
 
-    .badge-pill.ready {
-      background: var(--success-bg);
-      border-color: #86efac;
-      color: var(--success);
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #cbd5e1;
     }
 
-    .setup-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
+    .status-dot-pill.ready .dot { background: #16a34a; }
+    .status-dot-pill.ready { color: var(--success); border-color: #bbf7d0; background: #f0fdf4; }
+
+    /* Fallback File Loader (Only shown if auto-load hasn't found all 3 files) */
+    .loader-banner {
+      width: 100%;
+      max-width: 680px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
       border-radius: 14px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+      padding: 14px 18px;
+      margin-bottom: 18px;
     }
 
-    .setup-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
+    .loader-banner.hidden { display: none; }
+
+    .loader-banner h3 {
+      font-size: 0.88rem;
+      color: #92400e;
+      margin-bottom: 4px;
     }
 
-    .setup-header h2 { font-size: 1rem; font-weight: 700; }
-
-    .toggle-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 4px 10px;
+    .loader-banner p {
       font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--muted);
-      cursor: pointer;
+      color: #b45309;
+      margin-bottom: 10px;
     }
 
-    .setup-body {
-      margin-top: 14px;
+    .loader-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 8px;
     }
 
-    .setup-body.hidden { display: none; }
-
-    .file-slot {
-      border: 1.5px dashed var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      background: var(--surface-alt);
+    .mini-slot {
+      background: #fff;
+      border: 1px dashed #fcd34d;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.76rem;
     }
 
-    .file-slot.loaded {
+    .mini-slot.loaded {
       border-style: solid;
       border-color: #86efac;
       background: #f0fdf4;
     }
 
-    .file-slot label { display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; }
-    .file-slot .hint { font-size: 0.76rem; color: var(--muted); margin-bottom: 8px; }
-    .file-slot input[type="file"] { width: 100%; font-size: 0.78rem; }
-    .file-status { margin-top: 6px; font-size: 0.76rem; font-weight: 600; color: var(--muted); }
-    .file-slot.loaded .file-status { color: var(--success); }
+    .mini-slot label { display: block; font-weight: 700; margin-bottom: 4px; }
+    .mini-slot input { width: 100%; font-size: 0.72rem; }
 
-    .grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 20px; }
-    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
-
-    .card {
+    /* Main Real-World Portal Card */
+    .portal-card {
+      width: 100%;
+      max-width: 680px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 22px;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      text-align: center;
+      transition: all 0.25s ease;
     }
 
-    .card-tag {
-      display: inline-block;
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      padding: 4px 9px;
-      border-radius: 6px;
-      width: fit-content;
-    }
-
-    .tag-private { background: #e0e7ff; color: #3730a3; }
-    .tag-public { background: var(--primary-soft); color: var(--primary-dark); }
-
-    .card h2 { font-size: 1.2rem; font-weight: 800; margin-top: -6px; }
-    .desc { font-size: 0.88rem; color: var(--muted); margin-top: -10px; }
-
-    .field-group { display: flex; flex-direction: column; gap: 6px; }
-    .field-group label {
-      font-size: 0.86rem;
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
+    .portal-badge {
+      display: inline-flex;
       align-items: center;
-    }
-
-    .privacy-chip { font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
-    .chip-secret { background: #fef3c7; color: #92400e; }
-    .chip-public { background: #e2e8f0; color: #334155; }
-
-    input[type="number"] {
-      width: 100%;
-      padding: 12px 14px;
-      font-size: 1.1rem;
+      gap: 6px;
+      background: var(--surface-soft);
+      color: var(--primary-hover);
+      font-size: 0.78rem;
       font-weight: 700;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      outline: none;
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-bottom: 16px;
     }
 
-    input[type="number"]:focus { border-color: var(--primary); }
+    .portal-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 18px;
+      border-radius: 18px;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      font-size: 1.9rem;
+    }
 
-    .preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .portal-card h1 {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 10px;
+    }
 
-    .btn-preset {
-      flex: 1;
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--surface-alt);
-      font-size: 0.82rem;
+    .portal-card .lead {
+      font-size: 0.96rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 24px;
+    }
+
+    .trust-strip {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 26px;
+    }
+
+    .trust-item {
+      font-size: 0.8rem;
       font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
+      color: #334155;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
     }
-
-    .btn-preset:hover { background: #e2ebe5; }
 
     .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       width: 100%;
-      padding: 14px 18px;
+      max-width: 340px;
+      padding: 15px 22px;
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       background: var(--primary);
       color: #fff;
       font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
+      transition: background 0.15s, transform 0.08s;
     }
 
-    .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
-    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-primary:active:not(:disabled) { transform: scale(0.985); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-secondary:hover { background: var(--surface-soft); }
+
+    /* Unlocked Pass View */
+    .hidden { display: none !important; }
+
+    .pass-card {
+      background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: left;
+      margin: 18px 0 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pass-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .pass-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.85;
+      font-weight: 700;
+    }
+
+    .pass-verified {
+      background: rgba(255, 255, 255, 0.18);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .pass-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .pass-sub {
+      font-size: 0.86rem;
+      opacity: 0.9;
+      margin-bottom: 18px;
+    }
+
+    .pass-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.78rem;
+    }
+
+    .pass-meta span { display: block; opacity: 0.75; font-size: 0.7rem; }
+    .pass-meta strong { font-size: 0.88rem; }
+
+    /* Tampered Alert State */
+    .alert-box {
+      background: var(--danger-bg);
+      border: 1.5px solid #fca5a5;
+      color: var(--danger);
+      border-radius: 14px;
+      padding: 18px;
+      margin: 16px 0 20px;
+      text-align: left;
+    }
+
+    .alert-box strong { display: block; font-size: 1rem; margin-bottom: 4px; }
+    .alert-box p { font-size: 0.86rem; }
+
+    /* Under-the-Hood Technical Drawer */
+    .tech-wrapper {
+      width: 100%;
+      max-width: 680px;
+      margin-top: 18px;
+    }
+
+    .tech-toggle-row {
+      display: flex;
+      justify-content: center;
+    }
+
+    .tech-drawer {
+      margin-top: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    }
+
+    .tech-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tech-header h2 { font-size: 0.98rem; font-weight: 800; }
 
     .btn-danger-outline {
-      padding: 9px 14px;
-      border-radius: 10px;
+      padding: 7px 12px;
+      border-radius: 9px;
       border: 1.5px solid #fca5a5;
       background: #fff;
       color: var(--danger);
-      font-size: 0.84rem;
+      font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
     }
@@ -243,355 +374,544 @@
     .btn-danger-outline:hover:not(:disabled) { background: var(--danger-bg); }
     .btn-danger-outline:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    .status-banner {
-      border-radius: 12px;
-      padding: 16px;
-      border: 1.5px solid var(--border);
-      background: var(--surface-alt);
-      display: flex;
-      align-items: center;
-      gap: 14px;
+    .signals-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    .status-banner.granted { background: var(--success-bg); border-color: #86efac; color: var(--success); }
-    .status-banner.denied { background: var(--danger-bg); border-color: #fca5a5; color: var(--danger); }
-
-    .status-icon { font-size: 1.8rem; line-height: 1; }
-    .status-title { font-size: 1.05rem; font-weight: 800; }
-    .status-sub { font-size: 0.84rem; opacity: 0.9; }
-
-    .info-box {
-      background: var(--surface-alt);
+    .signal-card {
+      background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 12px 14px;
+      padding: 10px 12px;
     }
 
-    .info-box h3 {
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    .signal-card .k { font-size: 0.74rem; color: var(--muted); }
+    .signal-card .v { font-family: var(--mono); font-size: 1rem; font-weight: 800; }
 
-    .signals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-    .signal-item { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
-    .signal-item .k { font-size: 0.74rem; color: var(--muted); }
-    .signal-item .v { font-family: var(--mono); font-size: 1rem; font-weight: 800; color: var(--text); }
-
-    .privacy-callout {
+    .privacy-note {
+      background: var(--primary-light);
+      color: var(--primary-hover);
       font-size: 0.82rem;
       font-weight: 600;
-      color: var(--primary-dark);
-      background: var(--primary-soft);
-      padding: 8px 10px;
-      border-radius: 8px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
     }
 
     pre {
       font-family: var(--mono);
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       background: #0f172a;
       color: #e2e8f0;
       padding: 12px;
       border-radius: 10px;
-      max-height: 190px;
+      max-height: 170px;
       overflow: auto;
       white-space: pre-wrap;
       word-break: break-all;
+      margin-bottom: 10px;
     }
 
-    .metrics { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.78rem; color: var(--muted); }
-    .metrics span strong { color: var(--text); }
-    footer { margin-top: 24px; text-align: center; font-size: 0.8rem; color: var(--muted); }
+    .metrics {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    /* Digital ID Wallet Modal (Prover) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .wallet-modal {
+      width: 100%;
+      max-width: 410px;
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25);
+      animation: popIn 0.18s ease-out;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .wallet-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .wallet-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #3730a3;
+      background: #e0e7ff;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      color: var(--muted);
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .wallet-modal h2 {
+      font-size: 1.18rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .wallet-request {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.84rem;
+      color: #334155;
+      margin: 12px 0 16px;
+    }
+
+    .wallet-request strong { color: var(--text); }
+
+    .input-group { margin-bottom: 12px; }
+    .input-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .secret-tag {
+      font-size: 0.7rem;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 11px 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+    }
+
+    .input-group input:focus { border-color: var(--primary); }
+
+    .preset-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .preset-btn:hover { background: #e2ebe5; }
+
+    .wallet-error {
+      background: var(--danger-bg);
+      border: 1px solid #fca5a5;
+      color: var(--danger);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      margin-bottom: 14px;
+    }
+
+    .wallet-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .wallet-actions .btn-primary { max-width: none; }
+
+    footer {
+      margin-top: 28px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="brand">
-        <div class="logo">ZK</div>
-        <div>
-          <h1>ZK-AgeGate: Private 18+ Verification</h1>
-          <div class="subtitle">CC6 Emerging Technologies &bull; Blockchain Zero-Knowledge Proofs Demo (Groth16 / SnarkJS)</div>
-        </div>
-      </div>
-      <div id="artifactBadge" class="badge-pill">Waiting for zkREPL files (0/3)</div>
-    </header>
+  <!-- TOP BAR -->
+  <nav class="topbar">
+    <div class="brand">
+      <div class="brand-icon">DP</div>
+      <span>DigiPass 18+</span>
+    </div>
+    <div id="readyPill" class="status-dot-pill">
+      <span class="dot"></span>
+      <span id="readyText">Loading ZK Engine...</span>
+    </div>
+  </nav>
 
-    <section class="setup-card">
-      <div class="setup-header" id="setupToggle">
-        <h2>Step 1: Load Your zkREPL Artifacts (.wasm, .zkey, vkey.json)</h2>
-        <button type="button" class="toggle-btn" id="toggleBtn">Hide</button>
+  <!-- FALLBACK FILE LOADER (Auto-hides on GitHub Pages once files load) -->
+  <section id="loaderBanner" class="loader-banner hidden">
+    <h3>Local Setup Needed: Select Your 3 zkREPL Files</h3>
+    <p>Auto-load works automatically on GitHub Pages. If testing offline, pick your 3 files below:</p>
+    <div class="loader-grid">
+      <div class="mini-slot" id="slotWasm">
+        <label>1. main.wasm</label>
+        <input type="file" id="wasmInput" accept=".wasm" />
       </div>
-      <div class="setup-body" id="setupBody">
-        <div class="file-slot" id="slotWasm">
-          <label for="wasmInput">1. Circuit WASM (.wasm)</label>
-          <div class="hint">From zkREPL: <code>main.wasm</code></div>
-          <input type="file" id="wasmInput" accept=".wasm" />
-          <div class="file-status" id="wasmStatus">Not loaded</div>
-        </div>
-        <div class="file-slot" id="slotZkey">
-          <label for="zkeyInput">2. Proving Key (.zkey)</label>
-          <div class="hint">From zkREPL: <code>main.groth16.zkey</code></div>
-          <input type="file" id="zkeyInput" accept=".zkey" />
-          <div class="file-status" id="zkeyStatus">Not loaded</div>
-        </div>
-        <div class="file-slot" id="slotVkey">
-          <label for="vkeyInput">3. Verification Key (.json)</label>
-          <div class="hint">From zkREPL: <code>main.groth16.vkey.json</code></div>
-          <input type="file" id="vkeyInput" accept=".json" />
-          <div class="file-status" id="vkeyStatus">Not loaded</div>
-        </div>
+      <div class="mini-slot" id="slotZkey">
+        <label>2. main.groth16.zkey</label>
+        <input type="file" id="zkeyInput" accept=".zkey" />
       </div>
-    </section>
+      <div class="mini-slot" id="slotVkey">
+        <label>3. main.groth16.vkey.json</label>
+        <input type="file" id="vkeyInput" accept=".json" />
+      </div>
+    </div>
+  </section>
 
-    <main class="grid">
-      <section class="card">
-        <span class="card-tag tag-private">Prover &bull; User's Local Device</span>
-        <h2>Enter Your Private Identity Data</h2>
-        <p class="desc">
-          Your exact age stays strictly inside your browser. Only the mathematical proof is sent to the verifier.
+  <!-- MAIN REAL-WORLD PORTAL CARD -->
+  <main class="portal-card">
+    <!-- STATE A: LOCKED PORTAL -->
+    <div id="lockedView">
+      <div class="portal-badge">Privacy-First Identity Check</div>
+      <div class="portal-icon">&#128737;</div>
+      <h1>Verify You Are 18+ to Continue</h1>
+      <p class="lead">
+        Access 18+ digital services without uploading a government ID photo or revealing your exact birthday.
+      </p>
+
+      <div class="trust-strip">
+        <span class="trust-item">No ID Upload</span>
+        <span class="trust-item">Birthday Stays Hidden</span>
+        <span class="trust-item">Verified via Math (Groth16)</span>
+      </div>
+
+      <button type="button" id="openWalletBtn" class="btn-primary" disabled>
+        Verify with Digital ID (ZKP)
+      </button>
+    </div>
+
+    <!-- STATE B: UNLOCKED ACCESS PASS -->
+    <div id="unlockedView" class="hidden">
+      <div class="portal-badge" style="background: var(--success-bg); color: var(--success);">
+        &#9989; Zero-Knowledge Proof Verified
+      </div>
+      <h1>Welcome! Access Granted</h1>
+      <p class="lead" style="margin-bottom: 10px;">
+        Your eligibility was confirmed locally. No personal data was transmitted or stored.
+      </p>
+
+      <div class="pass-card">
+        <div class="pass-top">
+          <span class="pass-label">Verified Digital Pass</span>
+          <span class="pass-verified">18+ Confirmed</span>
+        </div>
+        <div class="pass-title">General Admission &bull; Verified Adult</div>
+        <div class="pass-sub">Issued via Zero-Knowledge Identity Verification</div>
+        <div class="pass-meta">
+          <div><span>Exact Age Shared</span><strong>None (Private)</strong></div>
+          <div><span>Rule Checked</span><strong id="passMinAge">Age &ge; 18</strong></div>
+          <div><span>Proof Status</span><strong>Cryptographically Valid</strong></div>
+        </div>
+      </div>
+
+      <button type="button" id="resetBtn" class="btn-secondary">Lock &amp; Test Another User</button>
+    </div>
+
+    <!-- STATE C: TAMPERED PROOF REJECTED -->
+    <div id="tamperedView" class="hidden">
+      <div class="portal-badge" style="background: var(--danger-bg); color: var(--danger);">
+        &#10060; Verification Failed
+      </div>
+      <h1>Tampered Proof Rejected</h1>
+      <div class="alert-box">
+        <strong>Invalid Cryptographic Proof</strong>
+        <p>
+          A single digit in the proof payload was altered. The verifier immediately returned <code>FALSE</code> and revoked access—proving Zero-Knowledge Proofs cannot be forged or edited.
         </p>
+      </div>
+      <button type="button" id="resetBtn2" class="btn-secondary">Reset &amp; Verify Again</button>
+    </div>
+  </main>
 
-        <div class="field-group">
-          <label for="ageInput">
-            Your Actual Age
-            <span class="privacy-chip chip-secret">PRIVATE INPUT</span>
-          </label>
-          <input type="number" id="ageInput" value="21" min="0" max="255" />
-        </div>
+  <!-- OPTIONAL UNDER-THE-HOOD DRAWER (HIDDEN BY DEFAULT) -->
+  <section class="tech-wrapper">
+    <div class="tech-toggle-row">
+      <button type="button" id="techToggleBtn" class="btn-secondary">
+        Show Under the Hood (Tech Proof &amp; Cheater Test)
+      </button>
+    </div>
 
-        <div class="field-group">
-          <label for="minAgeInput">
-            Required Minimum Age
-            <span class="privacy-chip chip-public">PUBLIC RULE</span>
-          </label>
-          <input type="number" id="minAgeInput" value="18" min="0" max="255" />
-        </div>
-
-        <div class="preset-row">
-          <button type="button" class="btn-preset" id="presetValid">Valid User (Age 21)</button>
-          <button type="button" class="btn-preset" id="presetUnderage">Underage Test (Age 16)</button>
-        </div>
-
-        <button type="button" class="btn-primary" id="proveBtn" disabled>
-          Generate ZK Proof &amp; Request Access
+    <div id="techDrawer" class="tech-drawer hidden">
+      <div class="tech-header">
+        <h2>Under the Hood: What the Verifier / Blockchain Sees</h2>
+        <button type="button" id="tamperBtn" class="btn-danger-outline" disabled>
+          Tamper Proof (Cheater Test)
         </button>
+      </div>
 
-        <div class="info-box">
-          <h3>How it connects to Blockchain</h3>
-          <p style="font-size: 0.83rem; color: var(--muted);">
-            Here, your browser verifies the proof using <code>vkey.json</code>. In production, this exact same verification key is embedded inside a <strong>Solidity smart contract</strong> so a blockchain can verify your age automatically—with no central database storing your birthday.
-          </p>
+      <div class="signals-row">
+        <div class="signal-card">
+          <div class="k">Public Output (isEligible)</div>
+          <div class="v" id="outEligible">—</div>
         </div>
-      </section>
-
-      <section class="card">
-        <span class="card-tag tag-public">Verifier &bull; Portal / Smart Contract</span>
-        <h2>Verification Result</h2>
-        <p class="desc">
-          The portal checks the cryptographic proof using only the Verification Key and public signals.
-        </p>
-
-        <div class="status-banner" id="statusBanner">
-          <div class="status-icon" id="statusIcon">&#128274;</div>
-          <div>
-            <div class="status-title" id="statusTitle">Portal Locked</div>
-            <div class="status-sub" id="statusSub">Load your 3 zkREPL files above, then click Generate ZK Proof.</div>
-          </div>
+        <div class="signal-card">
+          <div class="k">Public Rule (minAge)</div>
+          <div class="v" id="outMinAge">—</div>
         </div>
+      </div>
 
-        <div class="info-box">
-          <h3>What the Verifier Actually Sees (public.json)</h3>
-          <div class="signals-grid">
-            <div class="signal-item">
-              <div class="k">Public Output (isEligible)</div>
-              <div class="v" id="outEligible">—</div>
-            </div>
-            <div class="signal-item">
-              <div class="k">Public Rule (minAge)</div>
-              <div class="v" id="outMinAge">—</div>
-            </div>
-          </div>
-          <div class="privacy-callout" id="privacyCallout">
-            Zero-Knowledge Check: Your private age will NEVER appear here.
-          </div>
-        </div>
+      <div class="privacy-note" id="privacyNote">
+        Complete a verification above to inspect public.json and proof.json.
+      </div>
 
-        <div class="info-box">
-          <h3>
-            Cryptographic Proof (proof.json)
-            <button type="button" class="btn-danger-outline" id="tamperBtn" disabled>
-              Tamper Proof (Cheater Test)
-            </button>
-          </h3>
-          <pre id="proofBox">// Waiting for proof generation...</pre>
-        </div>
+      <pre id="proofBox">// No proof generated yet.</pre>
 
-        <div class="metrics">
-          <span>Proof Generation: <strong id="proveTime">—</strong></span>
-          <span>Verification Time: <strong id="verifyTime">—</strong></span>
-          <span>Protocol: <strong>Groth16 (BN128)</strong></span>
-        </div>
-      </section>
-    </main>
+      <div class="metrics">
+        <span>Proof Generation: <strong id="proveTime">—</strong></span>
+        <span>Verification Time: <strong id="verifyTime">—</strong></span>
+        <span>On-Chain Equivalent: <strong>Groth16 Solidity Verifier</strong></span>
+      </div>
+    </div>
+  </section>
 
-    <footer>
-      Runs 100% locally in your browser via SnarkJS &bull; No personal data is transmitted or stored.
-    </footer>
+  <!-- SIMULATED DIGITAL ID WALLET MODAL (PROVER) -->
+  <div id="walletModal" class="modal-backdrop hidden">
+    <div class="wallet-modal">
+      <div class="wallet-top">
+        <span class="wallet-chip">&#128274; Your Digital ID Wallet (Local)</span>
+        <button type="button" id="closeModalBtn" class="close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <h2>Verification Request</h2>
+      <div class="wallet-request">
+        <strong>DigiPass 18+</strong> is asking you to prove:<br />
+        &bull; You are at least <strong>18 years old</strong>.<br />
+        &bull; Your exact age stays strictly on your device.
+      </div>
+
+      <div class="input-group">
+        <label for="ageInput">
+          Age Stored in Your ID Wallet
+          <span class="secret-tag">PRIVATE (NEVER SENT)</span>
+        </label>
+        <input type="number" id="ageInput" value="21" min="0" max="255" />
+      </div>
+
+      <div class="preset-row">
+        <button type="button" id="preset21" class="preset-btn">Valid ID (Age 21)</button>
+        <button type="button" id="preset16" class="preset-btn">Underage ID (Age 16)</button>
+      </div>
+
+      <div id="walletError" class="wallet-error hidden"></div>
+
+      <div class="wallet-actions">
+        <button type="button" id="approveBtn" class="btn-primary">
+          Approve &amp; Generate ZK Proof
+        </button>
+        <button type="button" id="cancelModalBtn" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
   </div>
 
-  <script>
-    const state = { wasm: null, zkey: null, vkey: null, lastProof: null, lastPublicSignals: null };
+  <footer>
+    CC6 Emerging Technologies Demo &bull; Powered by Circom &amp; SnarkJS (100% Client-Side)
+  </footer>
 
-    const els = {
-      artifactBadge: document.getElementById("artifactBadge"),
-      setupToggle: document.getElementById("setupToggle"),
-      setupBody: document.getElementById("setupBody"),
-      toggleBtn: document.getElementById("toggleBtn"),
-      wasmInput: document.getElementById("wasmInput"),
-      zkeyInput: document.getElementById("zkeyInput"),
-      vkeyInput: document.getElementById("vkeyInput"),
-      slotWasm: document.getElementById("slotWasm"),
-      slotZkey: document.getElementById("slotZkey"),
-      slotVkey: document.getElementById("slotVkey"),
-      wasmStatus: document.getElementById("wasmStatus"),
-      zkeyStatus: document.getElementById("zkeyStatus"),
-      vkeyStatus: document.getElementById("vkeyStatus"),
-      ageInput: document.getElementById("ageInput"),
-      minAgeInput: document.getElementById("minAgeInput"),
-      presetValid: document.getElementById("presetValid"),
-      presetUnderage: document.getElementById("presetUnderage"),
-      proveBtn: document.getElementById("proveBtn"),
-      tamperBtn: document.getElementById("tamperBtn"),
-      statusBanner: document.getElementById("statusBanner"),
-      statusIcon: document.getElementById("statusIcon"),
-      statusTitle: document.getElementById("statusTitle"),
-      statusSub: document.getElementById("statusSub"),
-      outEligible: document.getElementById("outEligible"),
-      outMinAge: document.getElementById("outMinAge"),
-      privacyCallout: document.getElementById("privacyCallout"),
-      proofBox: document.getElementById("proofBox"),
-      proveTime: document.getElementById("proveTime"),
-      verifyTime: document.getElementById("verifyTime")
+  <script>
+    const state = {
+      wasm: null,
+      zkey: null,
+      vkey: null,
+      minAge: "18",
+      lastProof: null,
+      lastPublicSignals: null
     };
 
-    els.setupToggle.addEventListener("click", () => {
-      const hidden = els.setupBody.classList.toggle("hidden");
-      els.toggleBtn.textContent = hidden ? "Show" : "Hide";
-    });
+    const $ = (id) => document.getElementById(id);
+
+    function showView(viewId) {
+      ["lockedView", "unlockedView", "tamperedView"].forEach((id) => {
+        $(id).classList.toggle("hidden", id !== viewId);
+      });
+    }
 
     function updateReadiness() {
-      const count = [state.wasm, state.zkey, state.vkey].filter(Boolean).length;
-      if (count === 3) {
-        els.artifactBadge.textContent = "Artifacts Ready (3/3)";
-        els.artifactBadge.classList.add("ready");
-        els.proveBtn.disabled = false;
-        setStatus("neutral", "&#128274;", "Ready to Verify", "Enter an age on the left and click Generate ZK Proof.");
+      const loadedCount = [state.wasm, state.zkey, state.vkey].filter(Boolean).length;
+      if (loadedCount === 3) {
+        $("readyPill").classList.add("ready");
+        $("readyText").textContent = "ZK Engine Ready";
+        $("loaderBanner").classList.add("hidden");
+        $("openWalletBtn").disabled = false;
       } else {
-        els.artifactBadge.textContent = `Waiting for zkREPL files (${count}/3)`;
-        els.artifactBadge.classList.remove("ready");
-        els.proveBtn.disabled = true;
+        $("readyPill").classList.remove("ready");
+        $("readyText").textContent = `Artifacts (${loadedCount}/3)`;
+        $("loaderBanner").classList.remove("hidden");
+        $("openWalletBtn").disabled = true;
       }
     }
 
-    function setStatus(type, iconHtml, title, sub) {
-      els.statusBanner.className = "status-banner" + (type === "granted" ? " granted" : type === "denied" ? " denied" : "");
-      els.statusIcon.innerHTML = iconHtml;
-      els.statusTitle.textContent = title;
-      els.statusSub.textContent = sub;
-    }
-
-    els.wasmInput.addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      state.wasm = new Uint8Array(await file.arrayBuffer());
-      els.slotWasm.classList.add("loaded");
-      els.wasmStatus.textContent = `Loaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    // Manual file pickers (fallback for offline file:// testing)
+    $("wasmInput").addEventListener("change", async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      state.wasm = new Uint8Array(await f.arrayBuffer());
+      $("slotWasm").classList.add("loaded");
       updateReadiness();
     });
 
-    els.zkeyInput.addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      state.zkey = new Uint8Array(await file.arrayBuffer());
-      els.slotZkey.classList.add("loaded");
-      els.zkeyStatus.textContent = `Loaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    $("zkeyInput").addEventListener("change", async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      state.zkey = new Uint8Array(await f.arrayBuffer());
+      $("slotZkey").classList.add("loaded");
       updateReadiness();
     });
 
-    els.vkeyInput.addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    $("vkeyInput").addEventListener("change", async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
       try {
-        state.vkey = JSON.parse(await file.text());
-        els.slotVkey.classList.add("loaded");
-        els.vkeyStatus.textContent = `Loaded: ${file.name}`;
+        state.vkey = JSON.parse(await f.text());
+        $("slotVkey").classList.add("loaded");
         updateReadiness();
-      } catch (err) {
-        alert("Invalid JSON file for verification key.");
+      } catch (_) {
+        alert("Please select a valid JSON verification key file.");
       }
     });
 
+    // Auto-load artifacts when hosted on GitHub Pages
     async function tryAutoLoad() {
-      if (window.location.protocol === "file:") return;
+      if (window.location.protocol === "file:") {
+        updateReadiness();
+        return;
+      }
       const tryFetch = async (paths, asJson = false) => {
         for (const p of paths) {
           try {
             const res = await fetch(p);
-            if (res.ok) return { name: p, data: asJson ? await res.json() : new Uint8Array(await res.arrayBuffer()) };
+            if (res.ok) return asJson ? await res.json() : new Uint8Array(await res.arrayBuffer());
           } catch (_) {}
         }
         return null;
       };
 
-      const wasmRes = await tryFetch(["./main.wasm", "./age_check.wasm"]);
-      if (wasmRes) {
-        state.wasm = wasmRes.data;
-        els.slotWasm.classList.add("loaded");
-        els.wasmStatus.textContent = `Auto-loaded: ${wasmRes.name}`;
-      }
-      const zkeyRes = await tryFetch(["./main.groth16.zkey", "./main.zkey", "./age_check.zkey"]);
-      if (zkeyRes) {
-        state.zkey = zkeyRes.data;
-        els.slotZkey.classList.add("loaded");
-        els.zkeyStatus.textContent = `Auto-loaded: ${zkeyRes.name}`;
-      }
-      const vkeyRes = await tryFetch(["./main.groth16.vkey.json", "./main.vkey.json", "./verification_key.json", "./vkey.json"], true);
-      if (vkeyRes) {
-        state.vkey = vkeyRes.data;
-        els.slotVkey.classList.add("loaded");
-        els.vkeyStatus.textContent = `Auto-loaded: ${vkeyRes.name}`;
-      }
+      const [wasm, zkey, vkey] = await Promise.all([
+        tryFetch(["./main.wasm", "./age_check.wasm"]),
+        tryFetch(["./main.groth16.zkey", "./main.zkey", "./age_check.zkey"]),
+        tryFetch(["./main.groth16.vkey.json", "./main.vkey.json", "./verification_key.json", "./vkey.json"], true)
+      ]);
+
+      if (wasm) { state.wasm = wasm; $("slotWasm").classList.add("loaded"); }
+      if (zkey) { state.zkey = zkey; $("slotZkey").classList.add("loaded"); }
+      if (vkey) { state.vkey = vkey; $("slotVkey").classList.add("loaded"); }
       updateReadiness();
     }
     tryAutoLoad();
 
-    els.presetValid.addEventListener("click", () => { els.ageInput.value = 21; els.minAgeInput.value = 18; });
-    els.presetUnderage.addEventListener("click", () => { els.ageInput.value = 16; els.minAgeInput.value = 18; });
+    // Modal controls
+    function openModal() {
+      $("walletError").classList.add("hidden");
+      $("walletModal").classList.remove("hidden");
+    }
+    function closeModal() {
+      $("walletModal").classList.add("hidden");
+    }
 
-    els.proveBtn.addEventListener("click", async () => {
+    $("openWalletBtn").addEventListener("click", openModal);
+    $("closeModalBtn").addEventListener("click", closeModal);
+    $("cancelModalBtn").addEventListener("click", closeModal);
+
+    $("preset21").addEventListener("click", () => {
+      $("ageInput").value = 21;
+      $("walletError").classList.add("hidden");
+    });
+
+    $("preset16").addEventListener("click", () => {
+      $("ageInput").value = 16;
+      $("walletError").classList.add("hidden");
+    });
+
+    // Toggle Under-the-Hood Tech Drawer
+    $("techToggleBtn").addEventListener("click", () => {
+      const isHidden = $("techDrawer").classList.toggle("hidden");
+      $("techToggleBtn").textContent = isHidden
+        ? "Show Under the Hood (Tech Proof & Cheater Test)"
+        : "Hide Under the Hood";
+    });
+
+    // Reset Demo
+    function resetDemo() {
+      state.lastProof = null;
+      state.lastPublicSignals = null;
+      $("tamperBtn").disabled = true;
+      $("outEligible").textContent = "—";
+      $("outMinAge").textContent = "—";
+      $("proveTime").textContent = "—";
+      $("verifyTime").textContent = "—";
+      $("proofBox").textContent = "// No proof generated yet.";
+      $("privacyNote").textContent = "Complete a verification above to inspect public.json and proof.json.";
+      showView("lockedView");
+    }
+    $("resetBtn").addEventListener("click", resetDemo);
+    $("resetBtn2").addEventListener("click", resetDemo);
+
+    // Approve & Generate Proof inside Digital Wallet
+    $("approveBtn").addEventListener("click", async () => {
       if (typeof snarkjs === "undefined") {
         alert("SnarkJS library did not load. Please check your internet connection and refresh.");
         return;
       }
 
-      const age = String(els.ageInput.value).trim();
-      const minAge = String(els.minAgeInput.value).trim();
+      const age = String($("ageInput").value).trim();
+      const minAge = state.minAge;
 
-      els.proveBtn.disabled = true;
-      els.tamperBtn.disabled = true;
-      els.proveBtn.textContent = "Generating Zero-Knowledge Proof...";
-      setStatus("neutral", "&#9203;", "Computing Proof Locally...", "Running Circom witness + Groth16 prover in your browser.");
+      $("walletError").classList.add("hidden");
+      $("approveBtn").disabled = true;
+      $("approveBtn").textContent = "Generating Zero-Knowledge Proof...";
 
       try {
         const t0 = performance.now();
-        const { proof, publicSignals } = await snarkjs.groth16.fullProve({ age, minAge }, state.wasm, state.zkey);
+        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+          { age, minAge },
+          state.wasm,
+          state.zkey
+        );
         const t1 = performance.now();
         const isValid = await snarkjs.groth16.verify(state.vkey, publicSignals, proof);
         const t2 = performance.now();
@@ -599,53 +919,62 @@
         state.lastProof = proof;
         state.lastPublicSignals = publicSignals;
 
-        els.proveTime.textContent = `${(t1 - t0).toFixed(0)} ms`;
-        els.verifyTime.textContent = `${(t2 - t1).toFixed(0)} ms`;
-        els.outEligible.textContent = publicSignals[0] ?? "—";
-        els.outMinAge.textContent = publicSignals[1] ?? "—";
-        els.proofBox.textContent = JSON.stringify(proof, null, 2);
-        els.tamperBtn.disabled = false;
+        $("outEligible").textContent = publicSignals[0] ?? "—";
+        $("outMinAge").textContent = publicSignals[1] ?? "—";
+        $("proveTime").textContent = `${(t1 - t0).toFixed(0)} ms`;
+        $("verifyTime").textContent = `${(t2 - t1).toFixed(0)} ms`;
+        $("proofBox").textContent = JSON.stringify(proof, null, 2);
+        $("tamperBtn").disabled = false;
 
         if (isValid) {
-          setStatus("granted", "&#9989;", "Access Granted — Proof Verified!", `The verifier confirmed you meet the ${minAge}+ rule without ever seeing your real age.`);
-          els.privacyCallout.textContent = `Zero-Knowledge Confirmed: Your secret age (${age}) is NOT inside public.json or proof.json!`;
+          $("passMinAge").textContent = `Age >= ${minAge}`;
+          $("privacyNote").textContent =
+            `Zero-Knowledge Confirmed: Your private age (${age}) NEVER appeared in public.json or proof.json.`;
+          closeModal();
+          showView("unlockedView");
         } else {
-          setStatus("denied", "&#10060;", "Verification Failed", "The cryptographic proof did not match the verification key.");
+          $("walletError").textContent = "Proof verification failed against the verification key.";
+          $("walletError").classList.remove("hidden");
         }
       } catch (err) {
         state.lastProof = null;
         state.lastPublicSignals = null;
-        els.outEligible.textContent = "0 (Failed)";
-        els.outMinAge.textContent = minAge;
-        els.proveTime.textContent = "—";
-        els.verifyTime.textContent = "—";
-        els.proofBox.textContent = `// PROOF GENERATION BLOCKED (Soundness)\n// Circuit constraint failed: isEligible === 1\n// Error: ${err.message || err}`;
-        els.privacyCallout.textContent = `Soundness Confirmed: Age ${age} failed the >= ${minAge} constraint, so no valid proof could be created.`;
-        setStatus("denied", "&#128683;", "Access Denied — Constraint Failed", `Cannot generate a valid proof because ${age} does not meet the minimum age (${minAge}).`);
+        $("tamperBtn").disabled = true;
+        $("outEligible").textContent = "0 (Blocked)";
+        $("outMinAge").textContent = minAge;
+        $("proofBox").textContent =
+          `// SOUNDNESS CHECK: PROOF GENERATION BLOCKED\n// Circuit constraint failed: isEligible === 1\n// Error: ${err.message || err}`;
+        $("privacyNote").textContent =
+          `Soundness Confirmed: Age ${age} failed the >= ${minAge} constraint, so no valid proof could be created.`;
+        $("walletError").innerHTML =
+          `<strong>Cannot Generate Proof (Soundness):</strong> Your stored age (${age}) does not meet the 18+ requirement, so the ZKP circuit refuses to build a valid proof.`;
+        $("walletError").classList.remove("hidden");
       } finally {
-        els.proveBtn.disabled = false;
-        els.proveBtn.textContent = "Generate ZK Proof & Request Access";
+        $("approveBtn").disabled = false;
+        $("approveBtn").textContent = "Approve & Generate ZK Proof";
       }
     });
 
-    els.tamperBtn.addEventListener("click", async () => {
+    // Tamper Proof (Cheater Test)
+    $("tamperBtn").addEventListener("click", async () => {
       if (!state.lastProof || !state.lastPublicSignals) return;
 
       const tampered = JSON.parse(JSON.stringify(state.lastProof));
       const orig = tampered.pi_a[0];
-      const lastChar = orig.slice(-1);
-      tampered.pi_a[0] = orig.slice(0, -1) + (lastChar === "9" ? "8" : "9");
+      tampered.pi_a[0] = orig.slice(0, -1) + (orig.slice(-1) === "9" ? "8" : "9");
 
       const t0 = performance.now();
       const isValid = await snarkjs.groth16.verify(state.vkey, state.lastPublicSignals, tampered);
       const t1 = performance.now();
 
-      els.verifyTime.textContent = `${(t1 - t0).toFixed(0)} ms`;
-      els.proofBox.textContent = `// TAMPERED PROOF (1 digit changed in pi_a[0])\n` + JSON.stringify(tampered, null, 2);
+      $("verifyTime").textContent = `${(t1 - t0).toFixed(0)} ms`;
+      $("proofBox").textContent =
+        `// TAMPERED PROOF (1 digit altered in pi_a[0])\n` + JSON.stringify(tampered, null, 2);
 
       if (!isValid) {
-        setStatus("denied", "&#10060;", "Tampered Proof Rejected!", "Changing even a single digit in the proof broke the math. The verifier immediately returned FALSE.");
-        els.privacyCallout.textContent = "Tamper-Proof Security: Nobody can forge or edit a Zero-Knowledge Proof.";
+        $("privacyNote").textContent =
+          "Tamper-Proof Security: Editing 1 digit broke the math and returned FALSE.";
+        showView("tamperedView");
       }
     });
   </script>
